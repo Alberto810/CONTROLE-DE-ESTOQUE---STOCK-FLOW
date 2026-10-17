@@ -389,8 +389,7 @@
                             {% for alerta in produtos_alerta %}
                             <div class="d-flex align-items-center gap-2 mb-2">
                                 <i class="bi bi-dash-circle-fill text-danger"></i>
-                                <span class="fw-medium small text-truncate" style="max-width: 200px;">{{ alerta.nome
-                                    }}</span>
+                                <span class="fw-medium small text-truncate" style="max-width: 200px;">{{ alerta.nome }}</span>
                                 <span class="text-muted small ms-auto">({{ alerta.estoque_atual }})</span>
                             </div>
                             {% empty %}
