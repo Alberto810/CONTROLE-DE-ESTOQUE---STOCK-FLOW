@@ -1,8 +1,12 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
+from django.core.exceptions import ValidationError
 from django.db.models import F, Sum
 from django.utils import timezone
 from .models import Produto, Movimentacao
+from .forms import ProdutoForm, MovimentacaoForm
 
+@login_required
 def dashboard(request):
     produtos = Produto.objects.select_related('fornecedor').all()
     
@@ -23,3 +27,32 @@ def dashboard(request):
         'movimentacoes_hoje': movimentacoes_hoje,
     }
     return render(request, 'estoque/dashboard.html', context)
+
+@login_required
+def produto_criar(request):
+    if request.method == 'POST':
+        form = ProdutoForm(request.POST)
+        if form.is_valid():
+            form.save()
+            # Redireciona de volta para o dashboard após salvar
+            return redirect('dashboard')
+    else:
+        form = ProdutoForm()
+    
+    return render(request, 'estoque/produto_form.html', {'form': form})
+
+@login_required
+def movimentacao_criar(request):
+    if request.method == 'POST':
+        form = MovimentacaoForm(request.POST)
+        if form.is_valid():
+            try:
+                form.save()
+                return redirect('dashboard')
+            except ValidationError as e:
+                # Captura o erro do banco de dados e exibe no formulário
+                form.add_error(None, e.message)
+    else:
+        form = MovimentacaoForm()
+    
+    return render(request, 'estoque/movimentacao_form.html', {'form': form})

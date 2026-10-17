@@ -116,9 +116,13 @@
             <nav class="nav flex-column mt-3">
                 <a href="#" class="nav-link active"><i class="bi bi-grid-1x2"></i> Dashboard</a>
                 <a href="#" class="nav-link"><i class="bi bi-box-seam"></i> Inventário</a>
-                <a href="#" class="nav-link"><i class="bi bi-arrow-left-right"></i> Entradas e Saídas</a>
+                <a href="{% url 'movimentacao_criar' %}" class="nav-link"><i class="bi bi-arrow-left-right"></i>Entradas e Saídas</a>
                 <a href="#" class="nav-link"><i class="bi bi-people"></i> Fornecedores</a>
                 <a href="#" class="nav-link"><i class="bi bi-file-earmark-text"></i> Relatórios</a>
+                <form action="{% url 'logout' %}" method="post" class="mt-auto px-3 pb-3">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-outline-danger w-100"><i class="bi bi-box-arrow-right"></i>Sair</button>
+                </form>
             </nav>
         </div>
 
@@ -138,8 +142,8 @@
                                 class="bi bi-search text-muted"></i></span>
                         <input type="text" class="form-control border-start-0 ps-0" placeholder="Buscar produtos...">
                     </div>
-                    <button class="btn btn-success rounded-pill px-4 fw-medium"><i class="bi bi-plus-lg"></i> Adicionar
-                        Item</button>
+                    <a href="{% url 'produto_criar' %}" class="btn btn-success rounded-pill px-4 fw-medium"><i
+                            class="bi bi-plus-lg"></i> Adicionar Item</a>
                 </div>
             </div>
 
