@@ -17,13 +17,19 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
-        /* Sidebar Styles */
+        /* Sidebar Fixa e Original */
         .sidebar {
             background-color: #1e293b;
             min-height: 100vh;
             color: #94a3b8;
             width: 250px;
             position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1040;
+            transition: transform 0.3s ease;
+            display: flex;
+            flex-direction: column;
         }
 
         .sidebar .brand {
@@ -45,6 +51,7 @@
             border-radius: 8px;
             margin: 0 10px 5px 10px;
             transition: 0.2s;
+            text-decoration: none;
         }
 
         .sidebar .nav-link:hover,
@@ -53,13 +60,15 @@
             color: #fff;
         }
 
-        /* Main Content Adjustments */
+        /* Conteúdo Principal com cálculo exato para não quebrar */
         .main-content {
             margin-left: 250px;
             padding: 20px 40px;
+            width: calc(100% - 250px);
+            transition: all 0.3s ease;
         }
 
-        /* Cards & Shadows */
+        /* Estilos dos Cards Originais */
         .card {
             border: none;
             border-radius: 12px;
@@ -78,13 +87,14 @@
             color: #0f172a;
         }
 
-        /* Custom Badges */
+        /* Badges de Status Originais */
         .badge-soft-success {
             background-color: #d1fae5;
             color: #065f46;
             padding: 6px 12px;
             border-radius: 20px;
             font-weight: 500;
+            font-size: 0.85rem;
         }
 
         .badge-soft-danger {
@@ -93,6 +103,7 @@
             padding: 6px 12px;
             border-radius: 20px;
             font-weight: 500;
+            font-size: 0.85rem;
         }
 
         .badge-soft-warning {
@@ -101,65 +112,121 @@
             padding: 6px 12px;
             border-radius: 20px;
             font-weight: 500;
+            font-size: 0.85rem;
+        }
+
+        /* --- RESPONSIVIDADE SEGURA --- */
+        .mobile-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1030;
+        }
+
+        @media (max-width: 991.98px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            /* Esconde lateral */
+            .sidebar.show {
+                transform: translateX(0);
+            }
+
+            /* Mostra lateral ao clicar */
+            .main-content {
+                margin-left: 0;
+                width: 100%;
+                padding: 15px;
+            }
+
+            /* Ajusta o centro */
+            .mobile-overlay.show {
+                display: block;
+            }
         }
     </style>
 </head>
 
 <body>
 
-    <div class="d-flex">
+    <!-- Overlay escura para quando o menu abrir no celular -->
+    <div class="mobile-overlay" onclick="toggleSidebar()"></div>
+
+    <div class="d-flex w-100">
+
         <!-- Sidebar -->
         <div class="sidebar">
             <div class="brand">
                 <i class="bi bi-layers-fill text-success"></i> StockFlow
+                <button class="btn text-white ms-auto d-lg-none p-0" onclick="toggleSidebar()">
+                    <i class="bi bi-x-lg fs-5"></i>
+                </button>
             </div>
             <nav class="nav flex-column mt-3">
-                <a href="#" class="nav-link active"><i class="bi bi-grid-1x2"></i> Dashboard</a>
+                <a href="{% url 'dashboard' %}" class="nav-link active"><i class="bi bi-grid-1x2"></i> Dashboard</a>
                 <a href="#" class="nav-link"><i class="bi bi-box-seam"></i> Inventário</a>
-                <a href="{% url 'movimentacao_criar' %}" class="nav-link"><i class="bi bi-arrow-left-right"></i>Entradas e Saídas</a>
+                <!-- Link Ativo: Nova Movimentação -->
+                <a href="{% url 'movimentacao_criar' %}" class="nav-link"><i class="bi bi-arrow-left-right"></i>
+                    Registrar Movimentação</a>
                 <a href="#" class="nav-link"><i class="bi bi-people"></i> Fornecedores</a>
                 <a href="#" class="nav-link"><i class="bi bi-file-earmark-text"></i> Relatórios</a>
-                <form action="{% url 'logout' %}" method="post" class="mt-auto px-3 pb-3">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-outline-danger w-100"><i class="bi bi-box-arrow-right"></i>Sair</button>
-                </form>
             </nav>
+
+            <!-- Botão de Sair no rodapé da barra -->
+            <form action="{% url 'logout' %}" method="post" class="mt-auto px-3 pb-4">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-outline-danger w-100"><i class="bi bi-box-arrow-right"></i> Sair do
+                    Sistema</button>
+            </form>
         </div>
 
         <!-- Main Content -->
-        <div class="main-content w-100">
+        <div class="main-content">
 
-            <!-- Header -->
-            <div class="d-flex justify-content-between align-items-center mb-4">
+            <!-- Menu Mobile Header -->
+            <div
+                class="d-flex justify-content-between align-items-center mb-4 d-lg-none bg-white p-3 rounded shadow-sm">
+                <h5 class="fw-bold mb-0"><i class="bi bi-layers-fill text-success"></i> StockFlow</h5>
+                <button class="btn btn-light border" onclick="toggleSidebar()"><i class="bi bi-list fs-4"></i></button>
+            </div>
+
+            <!-- Header Original -->
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
                 <div>
                     <h2 class="fw-bold mb-0">Controle de Estoque</h2>
                     <span class="text-muted small">Dados atualizados em tempo real</span>
                 </div>
-                <div class="d-flex align-items-center gap-3">
-                    <!-- Search bar simulada -->
-                    <div class="input-group" style="width: 300px;">
+                <div class="d-flex gap-2 w-100 w-md-auto" style="max-width: 450px;">
+                    <div class="input-group">
                         <span class="input-group-text bg-white border-end-0"><i
                                 class="bi bi-search text-muted"></i></span>
                         <input type="text" class="form-control border-start-0 ps-0" placeholder="Buscar produtos...">
                     </div>
-                    <a href="{% url 'produto_criar' %}" class="btn btn-success rounded-pill px-4 fw-medium"><i
-                            class="bi bi-plus-lg"></i> Adicionar Item</a>
+                    <!-- Link Ativo: Novo Produto -->
+                    <a href="{% url 'produto_criar' %}" class="btn btn-success rounded-pill px-4 fw-medium text-nowrap">
+                        <i class="bi bi-plus-lg"></i> Novo Item
+                    </a>
                 </div>
             </div>
 
             <!-- KPI Cards -->
             <div class="row g-4 mb-4">
-                <div class="col-md-4">
+                <div class="col-md-6 col-lg-4">
                     <div class="card h-100 p-3">
                         <div class="card-body">
                             <div class="kpi-title">Total de Itens</div>
                             <div class="kpi-value mt-2">{{ total_itens }}</div>
-                            <div class="text-success small fw-bold mt-2"><i class="bi bi-caret-up-fill"></i> Dados
-                                gerais</div>
+                            <div class="text-success small fw-bold mt-2"><i class="bi bi-caret-up-fill"></i> Saldo geral
+                            </div>
                         </div>
                     </div>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-6 col-lg-4">
                     <div class="card h-100 p-3">
                         <div class="card-body">
                             <div class="d-flex justify-content-between">
@@ -171,7 +238,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-12 col-lg-4">
                     <div class="card h-100 p-3">
                         <div class="card-body">
                             <div class="kpi-title">Últimas Movimentações</div>
@@ -182,7 +249,7 @@
                 </div>
             </div>
 
-            <!-- Grid Principal (Tabela e Gráficos) -->
+            <!-- Grid Principal (Tabela e Gráficos originais) -->
             <div class="row g-4">
 
                 <!-- Tabela -->
@@ -191,12 +258,13 @@
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <h5 class="fw-bold mb-0">Tabelas</h5>
-                                <select class="form-select w-auto btn btn-light border-0 shadow-sm text-start">
-                                    <option>Filtrar</option>
-                                </select>
+                                <button class="btn btn-light border-0 shadow-sm text-start"><i class="bi bi-funnel"></i>
+                                    Filtrar</button>
                             </div>
+
+                            <!-- Wrapper para rolar no celular -->
                             <div class="table-responsive">
-                                <table class="table table-hover align-middle">
+                                <table class="table table-hover align-middle text-nowrap">
                                     <thead>
                                         <tr class="text-muted small">
                                             <th>Produto</th>
@@ -210,7 +278,8 @@
                                         <tr>
                                             <td>
                                                 <div class="d-flex align-items-center gap-2">
-                                                    <div class="bg-light rounded p-2"><i class="bi bi-box"></i></div>
+                                                    <div class="bg-light rounded p-2 text-muted"><i
+                                                            class="bi bi-box"></i></div>
                                                     <span class="fw-medium">{{ produto.nome }}</span>
                                                 </div>
                                             </td>
@@ -226,6 +295,11 @@
                                                         {% endif %}
                                             </td>
                                         </tr>
+                                        {% empty %}
+                                        <tr>
+                                            <td colspan="4" class="text-center text-muted py-4">Nenhum produto
+                                                cadastrado.</td>
+                                        </tr>
                                         {% endfor %}
                                     </tbody>
                                 </table>
@@ -237,7 +311,7 @@
                 <!-- Widgets Laterais -->
                 <div class="col-lg-4">
 
-                    <!-- Gráfico de Giro de Estoque -->
+                    <!-- Gráfico de Giro -->
                     <div class="card mb-4">
                         <div class="card-body">
                             <h6 class="fw-bold mb-3">Giro de Estoque</h6>
@@ -245,14 +319,15 @@
                         </div>
                     </div>
 
-                    <!-- Alertas Críticos -->
+                    <!-- Alertas Críticos Original -->
                     <div class="card">
                         <div class="card-body">
                             <h6 class="fw-bold mb-3">Alertas Críticos</h6>
                             {% for alerta in produtos_alerta %}
                             <div class="d-flex align-items-center gap-2 mb-2">
                                 <i class="bi bi-dash-circle-fill text-danger"></i>
-                                <span class="fw-medium small">{{ alerta.nome }}</span>
+                                <span class="fw-medium small text-truncate" style="max-width: 200px;">{{ alerta.nome
+                                    }}</span>
                                 <span class="text-muted small ms-auto">({{ alerta.estoque_atual }})</span>
                             </div>
                             {% empty %}
@@ -266,8 +341,14 @@
         </div>
     </div>
 
-    <!-- Script do Chart.js para renderizar o gráfico visual -->
     <script>
+        // Função simples de abrir/fechar a sidebar no celular sem quebrar layout
+        function toggleSidebar() {
+            document.querySelector('.sidebar').classList.toggle('show');
+            document.querySelector('.mobile-overlay').classList.toggle('show');
+        }
+
+        // Chart.js
         const ctx = document.getElementById('giroChart').getContext('2d');
         new Chart(ctx, {
             type: 'line',
