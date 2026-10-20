@@ -1,3 +1,8 @@
+import io
+from django.http import FileResponse
+from django.shortcuts import get_object_or_404
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import A4
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
@@ -76,3 +81,43 @@ def movimentacao_criar(request):
         form = MovimentacaoForm()
     
     return render(request, 'estoque/movimentacao_form.html', {'form': form})
+
+@login_required
+def historico_movimentacoes(request):
+    # Busca todas as movimentações, ordenadas da mais recente para a mais antiga
+    movimentacoes = Movimentacao.objects.select_related('produto').all().order_by('-data')
+    return render(request, 'estoque/historico.html', {'movimentacoes': movimentacoes})
+
+@login_required
+def gerar_comprovante_pdf(request, pk):
+    # Busca a movimentação específica pelo ID
+    movimentacao = get_object_or_404(Movimentacao, pk=pk)
+    
+    # Cria um buffer de memória para o PDF
+    buffer = io.BytesIO()
+    p = canvas.Canvas(buffer, pagesize=A4)
+    
+    # Desenhando o conteúdo do PDF
+    p.setFont("Helvetica-Bold", 16)
+    p.drawString(100, 800, "Comprovante de Movimentacao de Estoque")
+    
+    p.setFont("Helvetica", 12)
+    p.drawString(100, 760, f"ID da Movimentacao: #{movimentacao.id}")
+    p.drawString(100, 740, f"Produto: {movimentacao.produto.nome} (SKU: {movimentacao.produto.sku})")
+    p.drawString(100, 720, f"Tipo: {movimentacao.tipo}")
+    p.drawString(100, 700, f"Quantidade: {movimentacao.quantidade} unidades")
+    p.drawString(100, 680, f"Data/Hora: {movimentacao.data.strftime('%d/%m/%Y %H:%M')}")
+    
+    if movimentacao.observacao:
+        p.drawString(100, 660, f"Observacao: {movimentacao.observacao}")
+        
+    p.drawString(100, 600, "____________________________________________________")
+    p.drawString(100, 580, "StockFlow - Sistema de Controle de Estoque")
+    
+    # Fecha e salva o PDF
+    p.showPage()
+    p.save()
+    buffer.seek(0)
+    
+    # Retorna o arquivo para download
+    return FileResponse(buffer, as_attachment=True, filename=f'comprovante_{movimentacao.id}.pdf')
