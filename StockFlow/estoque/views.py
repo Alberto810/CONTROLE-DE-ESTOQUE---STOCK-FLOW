@@ -9,50 +9,58 @@ from django.core.paginator import Paginator
 from django.core.exceptions import ValidationError
 from django.db.models import F, Sum, Q
 from django.utils import timezone
-from .models import Produto, Movimentacao
-from .forms import ProdutoForm, MovimentacaoForm
+from .models import Produto, Movimentacao, Fornecedor
+from .forms import ProdutoForm, MovimentacaoForm, FornecedorForm
 
 @login_required
 def dashboard(request):
-    
-    #Captura o termo digitado na barra de pesquisa
+    # Captura a busca e o filtro da URL (forçando letras minúsculas no filtro)
     query = request.GET.get('q', '')
+    status_filter = request.GET.get('status', '').lower() 
     
-    #Busca todos os produtos para os cálculos gerais
+    # 1. Busca base
     produtos_base = Produto.objects.select_related('fornecedor').all().order_by('-id')
-    
-    #Se houver um termo de pesquisa, filtra os produtos
+    produtos_lista = produtos_base
+
+    # 2. Aplica a pesquisa por texto
     if query:
-        produtos = produtos_base.filter(
+        produtos_lista = produtos_lista.filter(
             Q(nome__icontains=query) | Q(sku__icontains=query)
         )
-    else:
-        produtos = produtos_base
-        
-    #Configura a paginação para a tabela de produtos
-    paginator = Paginator(produtos, 10)  
+
+    # 3. Aplica o filtro de status na MESMA lista
+    if status_filter == 'esgotado':
+        produtos_lista = produtos_lista.filter(estoque_atual__lte=0)
+    elif status_filter == 'baixo':
+        produtos_lista = produtos_lista.filter(estoque_atual__gt=0, estoque_atual__lt=F('estoque_minimo'))
+    elif status_filter == 'ok':
+        produtos_lista = produtos_lista.filter(estoque_atual__gte=F('estoque_minimo'))
+
+    # 4. Pagina a lista já filtrada
+    paginator = Paginator(produtos_lista, 8) 
     page_number = request.GET.get('page')
     produtos_paginados = paginator.get_page(page_number)
-    
-    # Cálculos para os Cards (KPIs)
+
+    # 5. Calcula os KPIs do topo da tela (sempre usando produtos_base para os cards não zerarem)
     total_itens = sum(p.estoque_atual for p in produtos_base)
     produtos_alerta = produtos_base.filter(estoque_atual__lt=F('estoque_minimo'))
     alertas_count = produtos_alerta.count()
-    
-    # Simula a contagem de movimentações do dia atual
+
     hoje = timezone.now().date()
     movimentacoes_hoje = Movimentacao.objects.filter(data__date=hoje).count()
 
+    # 6. Envia tudo para o HTML
     context = {
-        'produtos': produtos_paginados, # Lista filtrada para a tabela 
+        'produtos': produtos_paginados, # Tabela recebe apenas os itens filtrados
         'total_itens': total_itens,
         'alertas_count': alertas_count,
-        'produtos_alerta': produtos_alerta[:5], # Pega apenas os 5 primeiros para a lista lateral
+        'produtos_alerta': produtos_alerta[:5],
         'movimentacoes_hoje': movimentacoes_hoje,
         'query': query,
+        'status_filter': status_filter,
     }
     return render(request, 'estoque/dashboard.html', context)
-
+    
 @login_required
 def produto_criar(request):
     if request.method == 'POST':
@@ -121,3 +129,70 @@ def gerar_comprovante_pdf(request, pk):
     
     # Retorna o arquivo para download
     return FileResponse(buffer, as_attachment=True, filename=f'comprovante_{movimentacao.id}.pdf')
+
+@login_required
+def produto_editar(request, pk):
+    produto = get_object_or_404(Produto, pk=pk)
+    
+    if request.method == 'POST':
+        # Carrega o formulário com a instância do produto existente
+        form = ProdutoForm(request.POST, instance=produto)
+        if form.is_valid():
+            form.save()
+            return redirect('dashboard')
+    else:
+        form = ProdutoForm(instance=produto)
+        
+    return render(request, 'estoque/produto_form.html', {'form': form, 'editando': True})
+
+@login_required
+def produto_deletar(request, pk):
+    produto = get_object_or_404(Produto, pk=pk)
+    
+    if request.method == 'POST':
+        produto.delete()
+        return redirect('dashboard')
+        
+    return render(request, 'estoque/produto_confirmar_exclusao.html', {'produto': produto})
+
+@login_required
+def fornecedor_lista(request):
+    # Lista todos os fornecedores em ordem alfabética pelo nome
+    fornecedores = Fornecedor.objects.all().order_by('nome')
+    return render(request, 'estoque/fornecedor_lista.html', {'fornecedores': fornecedores})
+
+@login_required
+def fornecedor_criar(request):
+    if request.method == 'POST':
+        form = FornecedorForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('fornecedor_lista')
+    else:
+        form = FornecedorForm()
+    
+    return render(request, 'estoque/fornecedor_form.html', {'form': form})
+
+@login_required
+def fornecedor_editar(request, pk):
+    fornecedor = get_object_or_404(Fornecedor, pk=pk)
+    
+    if request.method == 'POST':
+        form = FornecedorForm(request.POST, instance=fornecedor)
+        if form.is_valid():
+            form.save()
+            return redirect('fornecedor_lista')
+    else:
+        form = FornecedorForm(instance=fornecedor)
+        
+    return render(request, 'estoque/fornecedor_form.html', {'form': form, 'editando': True})
+
+@login_required
+def fornecedor_deletar(request, pk):
+    fornecedor = get_object_or_404(Fornecedor, pk=pk)
+    
+    if request.method == 'POST':
+        fornecedor.delete()
+        return redirect('fornecedor_lista')
+        
+    return render(request, 'estoque/fornecedor_confirmar_exclusao.html', {'fornecedor': fornecedor})

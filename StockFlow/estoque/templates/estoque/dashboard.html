@@ -169,11 +169,12 @@
             </div>
             <nav class="nav flex-column mt-3">
                 <a href="{% url 'dashboard' %}" class="nav-link active"><i class="bi bi-grid-1x2"></i> Dashboard</a>
-                <a href="{% url 'historico_movimentacoes' %}" class="nav-link"><i class="bi bi-box-seam"></i>Inventário</a>
+                <a href="{% url 'historico_movimentacoes' %}" class="nav-link"><i
+                        class="bi bi-box-seam"></i>Inventário</a>
                 <!-- Link Ativo: Nova Movimentação -->
-                <a href="{% url 'movimentacao_criar' %}" class="nav-link"><i class="bi bi-arrow-left-right"></i>
-                    Registrar Movimentação</a>
-                <a href="#" class="nav-link"><i class="bi bi-people"></i> Fornecedores</a>
+                <a href="{% url 'movimentacao_criar' %}" class="nav-link"><i
+                        class="bi bi-arrow-left-right"></i>Registrar Movimentação</a>
+                <a href="{% url 'fornecedor_lista' %}" class="nav-link"><i class="bi bi-people"></i> Fornecedores</a>
                 <a href="#" class="nav-link"><i class="bi bi-file-earmark-text"></i> Relatórios</a>
             </nav>
 
@@ -273,165 +274,218 @@
                     <div class="card h-100 p-2">
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h5 class="fw-bold mb-0">Tabelas</h5>
-                                <button class="btn btn-light border-0 shadow-sm text-start"><i class="bi bi-funnel"></i>
-                                    Filtrar</button>
-                            </div>
+                                <h5 class="fw-bold mb-0">Relação de Produtos</h5>
 
-                            <!-- Wrapper para rolar no celular -->
-                            <div class="table-responsive">
-                                <table class="table table-hover align-middle text-nowrap">
-                                    <thead>
-                                        <tr class="text-muted small">
-                                            <th>Produto</th>
-                                            <th>SKU</th>
-                                            <th>Quantidade</th>
-                                            <th>Status</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {% for produto in produtos %}
-                                        <tr>
-                                            <td>
-                                                <div class="d-flex align-items-center gap-2">
-                                                    <div class="bg-light rounded p-2 text-muted"><i
-                                                            class="bi bi-box"></i></div>
-                                                    <span class="fw-medium">{{ produto.nome }}</span>
-                                                </div>
-                                            </td>
-                                            <td class="text-muted">{{ produto.sku }}</td>
-                                            <td class="fw-medium">{{ produto.estoque_atual }}</td>
-                                            <td>
-                                                {% if produto.estoque_atual <= 0 %} <span class="badge-soft-danger">
-                                                    Esgotado</span>
-                                                    {% elif produto.estoque_atual < produto.estoque_minimo %} <span
-                                                        class="badge-soft-warning">Baixo Estoque</span>
-                                                        {% else %}
-                                                        <span class="badge-soft-success">Em Estoque</span>
-                                                        {% endif %}
-                                            </td>
-                                        </tr>
-                                        {% empty %}
-                                        <tr>
-                                            <td colspan="4" class="text-center text-muted py-4">Nenhum produto
-                                                cadastrado.</td>
-                                        </tr>
-                                        {% endfor %}
-                                    </tbody>
-                                </table>
-                            </div>
-                            <!-- Paginação -->
-                            {% if produtos.has_other_pages %}
-                            <nav aria-label="Navegação da tabela de produtos" class="mt-4">
-                                <ul class="pagination justify-content-center justify-content-md-end mb-0">
+                                <!-- Novo Botão de Filtro Dropdown -->
+                                <div class="dropdown">
+                                    <button class="btn btn-light border shadow-sm dropdown-toggle" type="button"
+                                        data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="bi bi-funnel"></i> Filtrar 
+                                    </button>
 
-                                    <!-- Botão Anterior -->
-                                    {% if produtos.has_previous %}
-                                    <li class="page-item">
-                                        <a class="page-link text-success"
-                                            href="?page={{ produtos.previous_page_number }}{% if query %}&q={{ query }}{% endif %}">
-                                            &laquo; Anterior
-                                        </a>
-                                    </li>
-                                    {% else %}
-                                    <li class="page-item disabled"><span class="page-link">&laquo; Anterior</span></li>
-                                    {% endif %}
-
-                                    <!-- Números das Páginas (Mostra até 3 antes e 3 depois da atual) -->
-                                    {% for num in produtos.paginator.page_range %}
-                                    {% if produtos.number == num %}
-                                    <li class="page-item active"><span class="page-link bg-success border-success">{{
-                                            num }}</span></li>
-                                    {% elif num > produtos.number|add:'-3' and num < produtos.number|add:'3' %} <li
-                                        class="page-item">
-                                        <a class="page-link text-dark"
-                                            href="?page={{ num }}{% if query %}&q={{ query }}{% endif %}">{{ num }}</a>
+                                    <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                                        <li><a class="dropdown-item {% if status_filter == '' %}active{% endif %}"
+                                                href="?q={{ query }}">Mostrar Todos</a></li>
+                                        <li>
+                                            <hr class="dropdown-divider">
                                         </li>
-                                        {% endif %}
-                                        {% endfor %}
+                                        <li><a class="dropdown-item {% if status_filter == 'esgotado' %}fw-bold text-danger{% endif %}"
+                                                href="?status=esgotado&q={{ query }}"><i
+                                                    class="bi bi-circle-fill text-danger small me-2"></i> Esgotados</a>
+                                        </li>
+                                        <li><a class="dropdown-item {% if status_filter == 'baixo' %}fw-bold text-warning{% endif %}"
+                                                href="?status=baixo&q={{ query }}"><i
+                                                    class="bi bi-circle-fill text-warning small me-2">
+                                                </i> Baixo Estoque</a></li>
+                                        <li><a class="dropdown-item {% if status_filter == 'ok' %}fw-bold text-success{% endif %}"
+                                                href="?status=ok&q={{ query }}"><i
+                                                    class="bi bi-circle-fill text-success small me-2">
+                                                </i> Em Estoque</a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                                <!-- Wrapper para rolar no celular -->
+                                <div class="table-responsive">
+                                    <table class="table table-hover align-middle text-nowrap">
+                                        <thead>
+                                            <tr class="text-muted small">
+                                                <th>Produto</th>
+                                                <th>SKU</th>
+                                                <th>Quantidade</th>
+                                                <th>Status</th>
+                                                <th class="pe-3 text-end">Ações</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for produto in produtos %}
+                                            <tr>
 
-                                        <!-- Botão Próximo -->
-                                        {% if produtos.has_next %}
+                                                <td>
+                                                    <div class="d-flex align-items-center gap-2">
+                                                        <div class="bg-light rounded p-2 text-muted"><i
+                                                                class="bi bi-box"></i></div>
+                                                        <span class="fw-medium">{{ produto.nome }}</span>
+                                                    </div>
+                                                </td>
+                                                <td class="text-muted">{{ produto.sku }}</td>
+                                                <td class="fw-medium">{{ produto.estoque_atual }}</td>
+                                                <td>
+                                                    {% if produto.estoque_atual <= 0 %} <span class="badge-soft-danger">
+                                                        Esgotado</span>
+                                                        {% elif produto.estoque_atual < produto.estoque_minimo %} <span
+                                                            class="badge-soft-warning">Baixo Estoque</span>
+                                                            {% else %}
+                                                            <span class="badge-soft-success">Em Estoque</span>
+                                                            {% endif %}
+                                                </td>
+
+                                                <td class="pe-3 text-end">
+                                                    <div class="btn-group shadow-sm">
+                                                        <a href="{% url 'produto_editar' produto.id %}"
+                                                            class="btn btn-sm btn-light border text-primary"
+                                                            title="Editar">
+                                                            <i class="bi bi-pencil-square"></i>
+                                                        </a>
+                                                        <a href="{% url 'produto_deletar' produto.id %}"
+                                                            class="btn btn-sm btn-light border text-danger"
+                                                            title="Excluir">
+                                                            <i class="bi bi-trash3"></i>
+                                                        </a>
+                                                    </div>
+                                                </td>
+
+                                            </tr>
+                                            {% empty %}
+                                            <tr>
+                                                <td colspan="4" class="text-center text-muted py-4">Nenhum produto
+                                                    cadastrado.</td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <!-- Paginação -->
+                                {% if produtos.has_other_pages %}
+                                <nav aria-label="Navegação da tabela de produtos" class="mt-4">
+                                    <ul class="pagination justify-content-center justify-content-md-end mb-0">
+
+                                        <!-- Botão Anterior -->
+                                        {% if produtos.has_previous %}
                                         <li class="page-item">
                                             <a class="page-link text-success"
-                                                href="?page={{ produtos.next_page_number }}{% if query %}&q={{ query }}{% endif %}">
-                                                Próximo &raquo;
+                                                href="?page={{ produtos.previous_page_number }}{% if query %}&q={{ query }}{% endif %} {% if status_filter %}&status={{ status_filter }}{% endif %}">
+                                                &laquo; Anterior
                                             </a>
                                         </li>
                                         {% else %}
-                                        <li class="page-item disabled"><span class="page-link">Próximo &raquo;</span>
+                                        <li class="page-item disabled"><span class="page-link">&laquo; Anterior</span>
                                         </li>
                                         {% endif %}
 
-                                </ul>
-                            </nav>
-                            {% endif %}
-                            <!-- Fim da Paginação -->
-                        </div>
-                    </div>
-                </div>
+                                        <!-- Números das Páginas (Mostra até 3 antes e 3 depois da atual) -->
+                                        {% for num in produtos.paginator.page_range %}
+                                        {% if produtos.number == num %}
+                                        <li class="page-item active">
+                                            <span class="page-link bg-success border-success">
+                                                {{ num }}
+                                            </span>
+                                        </li>
+                                        {% elif num > produtos.number|add:'-3' and num < produtos.number|add:'3' %} <li
+                                            class="page-item">
+                                            <a class="page-link text-dark"
+                                                href="?page={{ num }}{% if query %}&q={{ query }}{% endif %} {% if status_filter %}&status={{ status_filter }}{% endif %}">
+                                                {{ num }}
+                                            </a>
+                                            </li>
+                                            {% endif %}
+                                            {% endfor %}
 
-                <!-- Widgets Laterais -->
-                <div class="col-lg-4">
+                                            <!-- Botão Próximo -->
+                                            {% if produtos.has_next %}
+                                            <li class="page-item">
+                                                <a class="page-link text-success"
+                                                    href="?page={{ produtos.next_page_number }}{% if query %}&q={{ query }}{% endif %} {% if status_filter %}&status={{ status_filter }}{% endif %}">
+                                                    Próximo &raquo;
+                                                </a>
+                                            </li>
+                                            {% else %}
+                                            <li class="page-item disabled"><span class="page-link">Próximo
+                                                    &raquo;</span>
+                                            </li>
+                                            {% endif %}
 
-                    <!-- Gráfico de Giro -->
-                    <div class="card mb-4">
-                        <div class="card-body">
-                            <h6 class="fw-bold mb-3">Giro de Estoque</h6>
-                            <canvas id="giroChart" height="200"></canvas>
-                        </div>
-                    </div>
-
-                    <!-- Alertas Críticos Original -->
-                    <div class="card">
-                        <div class="card-body">
-                            <h6 class="fw-bold mb-3">Alertas Críticos</h6>
-                            {% for alerta in produtos_alerta %}
-                            <div class="d-flex align-items-center gap-2 mb-2">
-                                <i class="bi bi-dash-circle-fill text-danger"></i>
-                                <span class="fw-medium small text-truncate" style="max-width: 200px;">{{ alerta.nome }}</span>
-                                <span class="text-muted small ms-auto">({{ alerta.estoque_atual }})</span>
+                                    </ul>
+                                </nav>
+                                {% endif %}
+                                <!-- Fim da Paginação -->
                             </div>
-                            {% empty %}
-                            <div class="text-muted small">Nenhum alerta no momento.</div>
-                            {% endfor %}
                         </div>
                     </div>
 
+                    <!-- Widgets Laterais -->
+                    <div class="col-lg-4">
+
+                        <!-- Gráfico de Giro -->
+                        <div class="card mb-4">
+                            <div class="card-body">
+                                <h6 class="fw-bold mb-3">Giro de Estoque</h6>
+                                <canvas id="giroChart" height="200"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Alertas Críticos Original -->
+                        <div class="card">
+                            <div class="card-body">
+                                <h6 class="fw-bold mb-3">Alertas Críticos</h6>
+                                {% for alerta in produtos_alerta %}
+                                <div class="d-flex align-items-center gap-2 mb-2">
+                                    <i class="bi bi-dash-circle-fill text-danger"></i>
+                                    <span class="fw-medium small text-truncate" style="max-width: 200px;">
+                                        {{ alerta.nome }}
+                                    </span>
+                                    <span class="text-muted small ms-auto">({{ alerta.estoque_atual }})</span>
+                                </div>
+                                {% empty %}
+                                <div class="text-muted small">Nenhum alerta no momento.</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <script>
-        // Função simples de abrir/fechar a sidebar no celular sem quebrar layout
-        function toggleSidebar() {
-            document.querySelector('.sidebar').classList.toggle('show');
-            document.querySelector('.mobile-overlay').classList.toggle('show');
-        }
-
-        // Chart.js
-        const ctx = document.getElementById('giroChart').getContext('2d');
-        new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'],
-                datasets: [{
-                    label: 'Movimentações',
-                    data: [12, 19, 15, 25, 22, 30],
-                    borderColor: '#3b82f6',
-                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                    tension: 0.4,
-                    fill: true
-                }]
-            },
-            options: {
-                plugins: { legend: { display: false } },
-                scales: { x: { grid: { display: false } }, y: { display: false } }
+        <script>
+            // Função simples de abrir/fechar a sidebar no celular sem quebrar layout
+            function toggleSidebar() {
+                document.querySelector('.sidebar').classList.toggle('show');
+                document.querySelector('.mobile-overlay').classList.toggle('show');
             }
-        });
-    </script>
 
+            // Chart.js
+            const ctx = document.getElementById('giroChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'],
+                    datasets: [{
+                        label: 'Movimentações',
+                        data: [12, 19, 15, 25, 22, 30],
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    plugins: { legend: { display: false } },
+                    scales: { x: { grid: { display: false } }, y: { display: false } }
+                }
+            });
+        </script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 
 </html>

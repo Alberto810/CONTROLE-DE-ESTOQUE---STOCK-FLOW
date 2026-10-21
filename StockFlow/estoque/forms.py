@@ -15,7 +15,17 @@ class ProdutoForm(forms.ModelForm):
             'estoque_minimo': forms.NumberInput(attrs={'class': 'form-control'}),
         }
         
-        
+class FornecedorForm(forms.ModelForm):
+    class Meta:
+        model = Fornecedor
+        fields = ['nome', 'cnpj', 'telefone', 'email']
+        widgets = {
+            'nome': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nome do fornecedor: Ex: ABC Distribuidora'}),
+            'cnpj': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'CNPJ do fornecedor'}),
+            'telefone': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Telefone do fornecedor'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Email do fornecedor'}),
+        }
+
 class MovimentacaoForm(forms.ModelForm):
     class Meta:
         model = Movimentacao

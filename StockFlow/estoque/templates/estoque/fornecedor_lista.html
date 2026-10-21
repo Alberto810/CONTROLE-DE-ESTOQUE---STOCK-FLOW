@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fornecedores - StockFlow</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <style>
+        body {
+            background-color: #f4f6f8;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .content-wrapper {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+
+<body class="p-3 p-md-4 py-lg-5">
+
+    <div class="content-wrapper bg-white p-3 p-md-4 p-lg-5 rounded-4 shadow-sm">
+
+        <div
+            class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center mb-4 gap-3">
+            <div>
+                <h4 class="fw-bold mb-1"><i class="bi bi-people-fill text-primary"></i> Fornecedores</h4>
+                <span class="text-muted small">Gerencie as empresas parceiras</span>
+            </div>
+
+            <div class="d-flex flex-column flex-sm-row gap-2 w-100 w-sm-auto">
+                <a href="{% url 'dashboard' %}" class="btn btn-light border shadow-sm text-nowrap">
+                    <i class="bi bi-arrow-left"></i> Voltar
+                </a>
+                <a href="{% url 'fornecedor_criar' %}" class="btn btn-primary shadow-sm text-nowrap">
+                    <i class="bi bi-plus-lg"></i> Novo Fornecedor
+                </a>
+            </div>
+        </div>
+
+        <div class="table-responsive border rounded-3">
+            <table class="table table-hover align-middle text-nowrap mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-3">Empresa</th>
+                        <th>CNPJ</th>
+                        <th>Telefone</th>
+                        <th>E-mail</th>
+                        <th class="pe-3 text-end">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for fornecedor in fornecedores %}
+                    <tr>
+                        <td class="ps-3 fw-medium">
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="bg-light rounded p-2 text-muted d-none d-sm-block"><i
+                                        class="bi bi-building"></i></div>
+                                {{ fornecedor.nome }}
+                            </div>
+                        </td>
+                        <td class="text-muted">{{ fornecedor.cnpj }}</td>
+                        <td>{{ fornecedor.telefone }}</td>
+                        <td><a href="mailto:{{ fornecedor.email }}" class="text-decoration-none">
+                                {{ fornecedor.email }}</a></td>
+
+                        <td class="pe-3 text-end">
+                            <div class="btn-group shadow-sm">
+                                <a href="{% url 'fornecedor_editar' fornecedor.id %}"
+                                    class="btn btn-sm btn-light border text-primary" title="Editar">
+                                    <i class="bi bi-pencil-square"></i>
+                                </a>
+                                <a href="{% url 'fornecedor_deletar' fornecedor.id %}"
+                                    class="btn btn-sm btn-light border text-danger" title="Excluir">
+                                    <i class="bi bi-trash3"></i>
+                                </a>
+                            </div>
+                        </td>
+
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center text-muted py-5">
+                            <i class="bi bi-buildings fs-1 d-block mb-3 text-light"></i>
+                            Nenhum fornecedor cadastrado.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</body>
+
+</html>
