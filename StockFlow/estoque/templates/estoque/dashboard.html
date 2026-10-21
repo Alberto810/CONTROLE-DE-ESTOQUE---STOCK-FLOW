@@ -179,7 +179,7 @@
             </nav>
 
             <!-- Botão de Sair no rodapé da barra -->
-            <form action="{% url 'logout' %}" method="post" class="mt-auto px-3 pb-4">
+            <form action="{% url 'logout' %}" method="post" class="mt-auto d-flex align-items-center justify-content-center px-3 py-2 pb-4">
                 {% csrf_token %}
                 <button type="submit" class="btn btn-outline-danger w-100"><i class="bi bi-box-arrow-right"></i> Sair do
                     Sistema</button>
