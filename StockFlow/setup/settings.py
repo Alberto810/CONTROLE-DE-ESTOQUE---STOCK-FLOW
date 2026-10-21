@@ -31,7 +31,7 @@ SECRET_KEY = 'django-insecure-d^bgt5h--&jiw^jp)cdr+kxm)y-7_x26h^qy@(7po%hct1j39f
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['.vercel.app', 'localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['stock-flow-nine-iota.vercel.app', 'localhost', '127.0.0.1']
 
 
 # Application definition
