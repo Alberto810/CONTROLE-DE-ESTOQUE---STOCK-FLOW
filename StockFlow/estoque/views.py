@@ -3,11 +3,15 @@ from django.http import FileResponse
 from django.shortcuts import get_object_or_404
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib import colors
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.core.exceptions import ValidationError
-from django.db.models import F, Sum, Q
+from django.db.models import F, Sum, Q, Case, When, IntegerField
+import json
 from django.utils import timezone
 from .models import Produto, Movimentacao, Fornecedor
 from .forms import ProdutoForm, MovimentacaoForm, FornecedorForm
@@ -54,7 +58,7 @@ def dashboard(request):
         'produtos': produtos_paginados, # Tabela recebe apenas os itens filtrados
         'total_itens': total_itens,
         'alertas_count': alertas_count,
-        'produtos_alerta': produtos_alerta[:5],
+        'produtos_alerta': produtos_alerta[:10],  # Mostra apenas os 10 primeiros produtos em alerta
         'movimentacoes_hoje': movimentacoes_hoje,
         'query': query,
         'status_filter': status_filter,
@@ -196,3 +200,84 @@ def fornecedor_deletar(request, pk):
         return redirect('fornecedor_lista')
         
     return render(request, 'estoque/fornecedor_confirmar_exclusao.html', {'fornecedor': fornecedor})
+
+@login_required
+def relatorio_estoque_pdf(request):
+    # Cria o buffer de memória
+    buffer = io.BytesIO()
+    
+    # Configura o documento PDF com margens
+    doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=30, leftMargin=30, topMargin=30, bottomMargin=30)
+    elementos = []
+    
+    # Estilos de texto
+    estilos = getSampleStyleSheet()
+    titulo = Paragraph("Relatório Geral de Estoque - StockFlow", estilos['Title'])
+    elementos.append(titulo)
+    elementos.append(Spacer(1, 20))
+    
+    # Busca os produtos e monta o cabeçalho da tabela
+    produtos = Produto.objects.all().order_by('nome')
+    dados_tabela = [['Produto', 'SKU', 'Qtd', 'Status']]
+    
+    # Preenche as linhas da tabela
+    for p in produtos:
+        if p.estoque_atual <= 0:
+            status = "Esgotado"
+        elif p.estoque_atual < p.estoque_minimo:
+            status = "Baixo Estoque"
+        else:
+            status = "Em Estoque"
+            
+        dados_tabela.append([p.nome, p.sku, str(p.estoque_atual), status])
+    
+    # Configura o design da tabela
+    tabela = Table(dados_tabela, colWidths=[220, 100, 80, 100])
+    tabela.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#0d6efd')), # Cabeçalho azul
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('ALIGN', (0, 0), (0, -1), 'LEFT'), # Mantém o nome do produto alinhado à esquerda
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 12),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 10),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.HexColor('#f8f9fa')), # Fundo cinza claro
+        ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#dee2e6')), # Bordas
+    ]))
+    
+    elementos.append(tabela)
+    
+    # Gera o PDF
+    doc.build(elementos)
+    buffer.seek(0)
+    
+    return FileResponse(buffer, as_attachment=True, filename=f"Relatorio_Estoque_{timezone.now().strftime('%d%m%Y')}.pdf")
+
+@login_required
+def relatorios_hub(request):
+    return render(request, 'estoque/relatorios.html')
+
+@login_required
+def giro_estoque(request):
+    # Anota o total de entradas e saídas diretamente no modelo de Produto (Top 10)
+    produtos_giro = Produto.objects.annotate(
+        total_entrada=Sum(
+            Case(When(movimentacoes__tipo__icontains='e', then='movimentacoes__quantidade'), default=0, output_field=IntegerField())
+        ),
+        total_saida=Sum(
+            Case(When(movimentacoes__tipo__icontains='s', then='movimentacoes__quantidade'), default=0, output_field=IntegerField())
+        )
+    ).filter(Q(total_entrada__gt=0) | Q(total_saida__gt=0)).order_by('-total_saida')[:10]
+
+    # Prepara as listas para o Chart.js
+    labels = [p.nome for p in produtos_giro]
+    entradas_data = [p.total_entrada or 0 for p in produtos_giro]
+    saidas_data = [p.total_saida or 0 for p in produtos_giro]
+
+    context = {
+        'labels_json': json.dumps(labels),
+        'entradas_json': json.dumps(entradas_data),
+        'saidas_json': json.dumps(saidas_data),
+        'produtos': produtos_giro,
+    }
+    return render(request, 'estoque/giro_estoque.html', context)

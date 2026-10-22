@@ -16,5 +16,8 @@ urlpatterns = [
     path('fornecedores/', views.fornecedor_lista, name='fornecedor_lista'),
     path('fornecedores/novo/', views.fornecedor_criar, name='fornecedor_criar'),
     path('fornecedores/<int:pk>/editar/', views.fornecedor_editar, name='fornecedor_editar'),
-    path('fornecedores/<int:pk>/deletar/', views.fornecedor_deletar, name='fornecedor_deletar')
+    path('fornecedores/<int:pk>/deletar/', views.fornecedor_deletar, name='fornecedor_deletar'),
+    path('relatorio/estoque/', views.relatorio_estoque_pdf, name='relatorio_estoque_pdf'),
+    path('relatorios/', views.relatorios_hub, name='relatorios'),
+    path('giro-estoque/', views.giro_estoque, name='giro_estoque'),
 ]    
