@@ -16,7 +16,7 @@ from django.utils import timezone
 from .models import Produto, Movimentacao, Fornecedor
 from .forms import ProdutoForm, MovimentacaoForm, FornecedorForm
 
-@login_required
+#@login_required
 def dashboard(request):
     # Captura a busca e o filtro da URL (forçando letras minúsculas no filtro)
     query = request.GET.get('q', '')
@@ -65,7 +65,7 @@ def dashboard(request):
     }
     return render(request, 'estoque/dashboard.html', context)
     
-@login_required
+#@login_required
 def produto_criar(request):
     if request.method == 'POST':
         form = ProdutoForm(request.POST)
@@ -78,7 +78,7 @@ def produto_criar(request):
     
     return render(request, 'estoque/produto_form.html', {'form': form})
 
-@login_required
+#@login_required
 def movimentacao_criar(request):
     if request.method == 'POST':
         form = MovimentacaoForm(request.POST)
@@ -94,13 +94,13 @@ def movimentacao_criar(request):
     
     return render(request, 'estoque/movimentacao_form.html', {'form': form})
 
-@login_required
+#@login_required
 def historico_movimentacoes(request):
     # Busca todas as movimentações, ordenadas da mais recente para a mais antiga
     movimentacoes = Movimentacao.objects.select_related('produto').all().order_by('-data')
     return render(request, 'estoque/historico.html', {'movimentacoes': movimentacoes})
 
-@login_required
+#@login_required
 def gerar_comprovante_pdf(request, pk):
     # Busca a movimentação específica pelo ID
     movimentacao = get_object_or_404(Movimentacao, pk=pk)
@@ -134,7 +134,7 @@ def gerar_comprovante_pdf(request, pk):
     # Retorna o arquivo para download
     return FileResponse(buffer, as_attachment=True, filename=f'comprovante_{movimentacao.id}.pdf')
 
-@login_required
+#@login_required
 def produto_editar(request, pk):
     produto = get_object_or_404(Produto, pk=pk)
     
@@ -149,7 +149,7 @@ def produto_editar(request, pk):
         
     return render(request, 'estoque/produto_form.html', {'form': form, 'editando': True})
 
-@login_required
+#@login_required
 def produto_deletar(request, pk):
     produto = get_object_or_404(Produto, pk=pk)
     
@@ -159,13 +159,13 @@ def produto_deletar(request, pk):
         
     return render(request, 'estoque/produto_confirmar_exclusao.html', {'produto': produto})
 
-@login_required
+#@login_required
 def fornecedor_lista(request):
     # Lista todos os fornecedores em ordem alfabética pelo nome
     fornecedores = Fornecedor.objects.all().order_by('nome')
     return render(request, 'estoque/fornecedor_lista.html', {'fornecedores': fornecedores})
 
-@login_required
+#@login_required
 def fornecedor_criar(request):
     if request.method == 'POST':
         form = FornecedorForm(request.POST)
@@ -177,7 +177,7 @@ def fornecedor_criar(request):
     
     return render(request, 'estoque/fornecedor_form.html', {'form': form})
 
-@login_required
+#@login_required
 def fornecedor_editar(request, pk):
     fornecedor = get_object_or_404(Fornecedor, pk=pk)
     
@@ -191,7 +191,7 @@ def fornecedor_editar(request, pk):
         
     return render(request, 'estoque/fornecedor_form.html', {'form': form, 'editando': True})
 
-@login_required
+#@login_required
 def fornecedor_deletar(request, pk):
     fornecedor = get_object_or_404(Fornecedor, pk=pk)
     
@@ -201,7 +201,7 @@ def fornecedor_deletar(request, pk):
         
     return render(request, 'estoque/fornecedor_confirmar_exclusao.html', {'fornecedor': fornecedor})
 
-@login_required
+#@login_required
 def relatorio_estoque_pdf(request):
     # Cria o buffer de memória
     buffer = io.BytesIO()
@@ -253,11 +253,11 @@ def relatorio_estoque_pdf(request):
     
     return FileResponse(buffer, as_attachment=True, filename=f"Relatorio_Estoque_{timezone.now().strftime('%d%m%Y')}.pdf")
 
-@login_required
+#@login_required
 def relatorios_hub(request):
     return render(request, 'estoque/relatorios.html')
 
-@login_required
+#@login_required
 def giro_estoque(request):
     # Anota o total de entradas e saídas diretamente no modelo de Produto (Top 10)
     produtos_giro = Produto.objects.annotate(
